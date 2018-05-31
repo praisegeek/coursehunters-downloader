@@ -6,9 +6,12 @@ use GuzzleHttp\Cookie\CookieJar;
 use Illuminate\Support\Collection;
 use Symfony\Component\Console\Helper\ProgressBar;
 use Symfony\Component\Console\Style\SymfonyStyle;
+use Symfony\Component\DomCrawler\Crawler;
 
 class Remote
 {
+    protected $lessonFolder;
+
     /**
      * @var Client $guzzle
      */
@@ -54,15 +57,15 @@ class Remote
             'verify' => false
         ]);
 
-        $csrfToken = $this->parser->parse($response->getBody()->getContents())->getCrsfToken();
+        //$csrfToken = $this->parser->parse($response->getBody()->getContents())->getCrsfToken();
 
         $response = $this->guzzle->request('POST', getenv('LOGIN_PATH'), [
             'cookies' => $this->cookie,
             'form_params'    => [
                 'email'    => $username,
                 'password' => $password,
-                '_token'   => $csrfToken,
-                'remember' => 1,
+                //'_token'   => $csrfToken,
+                //'remember' => 1,
             ],
             'verify' => false
         ]);
@@ -90,8 +93,11 @@ class Remote
     public function fetchSeries()
     {
         $this->io->section("Fetching all series...");
-        $response = $this->guzzle->request('GET', 'lessons', ['verify' => false]);
+
+
+        $response = $this->guzzle->request('GET', '/', ['verify' => false]);
         $parse  =  $this->parser->parse((string) $response->getBody());
+
         $series = $parse->getSeries();
         $progress = new ProgressBar($this->io, $parse->totalPages());
         $progress->start();
@@ -116,12 +122,13 @@ class Remote
      */
     public function fetchLessons($series)
     {
-        $response = $this->guzzle->request('GET', "lessons/{$series}", [
+        $response = $this->guzzle->request('GET', "course/{$series}", [
             'cookies' => $this->cookie,
             'verify' => false
         ]);
 
         $content = $response->getBody()->getContents();
+
         return $this->parser->parse($content)->getLessonLinks();
     }
 
@@ -131,9 +138,16 @@ class Remote
      */
     public function downloadFile($file, $lesson)
     {
+        echo "\n";
+
+        echo "Current Lesson -> " . $file->getLink();
+
+        echo "\n";
+
         try {
-            $this->guzzle->request('GET', $this->getRedirectUrl($file->getLink()), [
-                'sink' => getenv('DOWNLOAD_FOLDER') . "/{$lesson}/{$file->getFilename()}"
+            $link = (string) $file->getLink();
+            $this->guzzle->request('GET', $this->getRedirectUrl($link), [
+                'sink' => getenv('DOWNLOAD_FOLDER') . "/{$this->lessonFolder}/{$file->getFilename()}"
             ]);
         } catch (\Exception $e) {
             $this->io->error("Cant download '{$file->getTitle()}' ({$e->getMessage()})");
@@ -147,8 +161,9 @@ class Remote
             'allow_redirects'   => false,
             'verify'            => false
         ]);
-
-        return $response->getHeader('Location')[0];
+        
+        return $url;
+        //return $response->getHeader('Location')[0] ?: $url;
     }
 
     /**
@@ -159,8 +174,33 @@ class Remote
      */
     public function createFolder($folder, $file)
     {
+        $folder = $this->getLessonTitle($folder);
+        $this->lessonFolder = $folder;
+
+        
         if ($file->file->has($folder) === false) {
             $file->file->createDir($folder);
         }
+    }
+
+    /**
+     * Resolve folder name from lesson title on page. Useful for getting actual course title for different 
+     * langugae websites
+     *
+     * @param $lesson
+     */
+
+    public function getLessonTitle($lesson) {
+        $response = $this->guzzle->request('GET', "course/{$lesson}", [
+            'cookies' => $this->cookie,
+            'verify' => false
+        ]);
+
+        $content = $response->getBody()->getContents();
+        $crawler = new Crawler($content, getenv('BASE_URL'));
+
+        $title = $crawler->filter('h2')->text();
+        
+        return $title;
     }
 }

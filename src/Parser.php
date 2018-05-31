@@ -46,8 +46,10 @@ class Parser
     public function getSeries()
     {
         $series = [];
-        $this->crawler->filter('.library-item')->each(function(Crawler $node) use (&$series) {
-            $title = $node->filter('h2.library-item__title')->eq(0);
+
+        $this->crawler->filter('.lessons-list_li')->each(function(Crawler $node) use (&$series) {
+
+            $title = $node->filter('span[itemprop=name]')->eq(0);
 
             if (count($title->children()) > 0) {
                 $link = $title->children()->attr('href');
@@ -109,11 +111,11 @@ class Parser
     {
         $slugify = new Slugify();
         $filesCollection = new Collection();
-
-        $nodes = $this->crawler->filter('.large-8 .container-list__link');
+        
+        $nodes = $this->crawler->filter('.lessons-list__li');
 
         if ($nodes->count()) {
-            $linkCrawler = $this->crawler->selectLink('Download full code');
+            $linkCrawler = $this->crawler->selectLink('Материалы к курсу');
             if ($linkCrawler->count()) {
                 $zip = new Zip();
                 $zip->setLink($linkCrawler->link()->getUri());
@@ -125,9 +127,10 @@ class Parser
 
             $nodes->each(function(Crawler $node, $i) use ($filesCollection, $slugify) {
                 $video = new Video();
-                $video->setLink($node->attr('href'));
-                $video->setFilename(sprintf("%02d", $i)."-".$node->filter('.container-list__item-header')->text());
-                $video->setTitle($node->filter('.container-list__item-header')->text());
+                //$video->setLink($node->attr('href'));
+                $video->setLink($node->filter('link[itemprop=url]')->attr('href'));
+                $video->setFilename(sprintf("%02d", $i)."-".$node->filter('span[itemprop=name]')->text());
+                $video->setTitle($node->filter('span[itemprop=name]')->text());
 
                 $filesCollection->push($video);
             });

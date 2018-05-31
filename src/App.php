@@ -36,21 +36,26 @@ class App
      */
     public function download($series = [])
     {
-        $this->io->title('Start downloading series');
+        $this->io->title('Start downloading codehunter series');
 
-        $seriesCollection = $this->remote->fetchSeries();
+        // $seriesCollection = $this->remote->fetchSeries();
 
-        if (!empty($series)) {
-            $seriesCollection = $seriesCollection->filter(function($value, $key) use ($series) {
-                return in_array($key, $series);
-            });
-        }
+        // if (!empty($series)) {
+        //     $seriesCollection = $seriesCollection->filter(function($value, $key) use ($series) {
+        //         return in_array($key, $series);
+        //     });
+        // }
 
         $this->io->section("Downloading found series...");
         $files = new FileLister();
-        foreach ($seriesCollection as $lesson => $count) {
+
+        foreach ($series as $lesson) {
+
             $this->remote->createFolder($lesson, $files);
+            
             $remoteLessons = $this->remote->fetchLessons($lesson);
+
+            //print_r($remoteLessons);
 
             $this->io->text("Downloading series: {$lesson}");
 
