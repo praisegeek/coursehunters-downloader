@@ -24,8 +24,8 @@ class DownloadCommand extends Command
         $io = new SymfonyStyle($input, $output);
         $helper = $this->getHelper('question');
 
-        $username = getenv('CCUSERNAME');
-        $password = getenv('CCPASSWORD');
+        $username = getenv('USERNAME');
+        $password = getenv('PASSWORD');
 
         if (!$username) {
             $username = new Question('Please enter your username: ');

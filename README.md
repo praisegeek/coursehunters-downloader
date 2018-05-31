@@ -20,7 +20,7 @@ If you dont want to save your username and password in configuration file just r
 ## Installation
 - Clone this repo to a folder in your machine
 - Change your info in .env.example and rename it to .env
-- Open up .env file change the value of CCUSERNAME to your Code Course Email and CCPASSWORD to your Code Course Password.
+- Open up .env file change the value of USERNAME to your Code Hunters Email and PASSWORD to your Code Hunders Password.
 - `composer install`
 - `php codehunters download "series name"` and you are done!
 
