@@ -10,7 +10,7 @@ use Symfony\Component\DomCrawler\Crawler;
 
 class Remote
 {
-    protected $lessonFolder;
+    //protected $lessonFolder;
 
     /**
      * @var Client $guzzle
@@ -147,7 +147,7 @@ class Remote
         try {
             $link = (string) $file->getLink();
             $this->guzzle->request('GET', $this->getRedirectUrl($link), [
-                'sink' => getenv('DOWNLOAD_FOLDER') . "/{$this->lessonFolder}/{$file->getFilename()}"
+                'sink' => getenv('DOWNLOAD_FOLDER') . "/{$lesson}/{$file->getFilename()}"
             ]);
         } catch (\Exception $e) {
             $this->io->error("Cant download '{$file->getTitle()}' ({$e->getMessage()})");
@@ -174,8 +174,8 @@ class Remote
      */
     public function createFolder($folder, $file)
     {
-        $folder = $this->getLessonTitle($folder);
-        $this->lessonFolder = $folder;
+        //$folder = $this->getLessonTitle($folder);
+        //$this->lessonFolder = $folder;
 
         
         if ($file->file->has($folder) === false) {
